@@ -4,46 +4,23 @@ import asyncio
 import aiohttp
 import yt_dlp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    Application, CommandHandler, MessageHandler,
-    filters, ContextTypes, CallbackQueryHandler
-)
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 
 BOT_TOKEN = "8729876434:AAEtQnFpVANWXrBvg3360q1JfFvLYTljwQI"
 AUDD_API_KEY = "test"
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO
-)
+logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "👋 Salom! Men <b>Jakar Music Bot</b>man!\n\n"
-        "🎵 <b>Nima qila olaman:</b>\n"
-        "• Qo'shiq matni → qo'shiq nomini topaman\n"
-        "• YouTube link → video/audio yuklayman\n"
-        "• Instagram link → video/reel yuklayman\n\n"
-        "📌 <b>Foydalanish:</b>\n"
-        "• Qo'shiq matnini yuboring\n"
-        "• Yoki link yuboring (YouTube, Instagram)\n\n"
-        "❓ Yordam: /help"
-    )
-    await update.message.reply_text(text, parse_mode="HTML")
+    text = "👋 Salom! Men Jakar Music Botman!\n\n🎵 Nima qila olaman:\n• Qo'shiq matni yuborsa qo'shiq nomini topaman\n• YouTube link yuborsa video/audio yuklayman\n• Instagram link yuborsa video yuklayman\n\n❓ Yordam: /help"
+    await update.message.reply_text(text)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "📖 <b>Qo'llanma:</b>\n\n"
-        "🎵 <b>Qo'shiq topish:</b>\n"
-        "Qo'shiq matnidan bir necha qatorni yuboring\n\n"
-        "📥 <b>Video yuklab olish:</b>\n"
-        "YouTube, Instagram yoki boshqa link yuboring\n\n"
-        "⚙️ <b>Komandalar:</b>\n"
-        "/start - Botni boshlash\n"
-        "/help - Yordam\n"
-    )
-    await update.message.reply_text(text, parse_mode="HTML")
-  async def find_song_by_lyrics(lyrics: str):
+    text = "📖 Qollanma:\n\n🎵 Qoshiq topish:\nQoshiq matnidan bir necha qatorni yuboring\n\n📥 Video yuklab olish:\nYouTube yoki Instagram link yuboring\n\n⚙️ Komandalar:\n/start - Botni boshlash\n/help - Yordam"
+    await update.message.reply_text(text)
+
+async def find_song_by_lyrics(lyrics):
     url = "https://api.audd.io/findLyrics/"
     params = {"api_token": AUDD_API_KEY, "q": lyrics}
     try:
@@ -56,7 +33,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"AudD xatosi: {e}")
     return None
 
-def download_video(url: str, output_path: str):
+def download_video(url, output_path):
     ydl_opts = {
         "outtmpl": output_path + "/%(title)s.%(ext)s",
         "format": "best[filesize<50M]/best",
@@ -69,10 +46,10 @@ def download_video(url: str, output_path: str):
             info = ydl.extract_info(url, download=True)
             return ydl.prepare_filename(info)
     except Exception as e:
-        logger.error(f"Yuklab olish xatosi: {e}")
+        logger.error(f"Video xatosi: {e}")
         return None
 
-def download_audio(url: str, output_path: str):
+def download_audio(url, output_path):
     ydl_opts = {
         "outtmpl": output_path + "/%(title)s.%(ext)s",
         "format": "bestaudio/best",
@@ -88,7 +65,8 @@ def download_audio(url: str, output_path: str):
     except Exception as e:
         logger.error(f"Audio xatosi: {e}")
         return None
-      def is_youtube_link(text):
+
+def is_youtube_link(text):
     return any(x in text for x in ["youtube.com", "youtu.be"])
 
 def is_instagram_link(text):
@@ -121,7 +99,8 @@ async def download_and_send(update, context, url, format_type):
     except Exception as e:
         logger.error(f"Xato: {e}")
         await update.message.reply_text("❌ Xatolik yuz berdi!")
-      async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     if is_url(text):
         if is_youtube_link(text):
@@ -135,17 +114,14 @@ async def download_and_send(update, context, url, format_type):
             await download_and_send(update, context, text, "video")
         return
     if len(text) > 10:
-        await update.message.reply_text("🔍 Qo'shiq qidirilmoqda...")
+        await update.message.reply_text("🔍 Qoshiq qidirilmoqda...")
         song = await find_song_by_lyrics(text)
         if song:
-            await update.message.reply_text(
-                f"🎵 <b>Topildi!</b>\n\n🎤 <b>Ijrochi:</b> {song.get('artist')}\n🎼 <b>Nomi:</b> {song.get('title')}",
-                parse_mode="HTML"
-            )
+            await update.message.reply_text(f"🎵 Topildi!\n\n🎤 Ijrochi: {song.get('artist')}\n🎼 Nomi: {song.get('title')}")
         else:
-            await update.message.reply_text("😔 Qo'shiq topilmadi. Ko'proq matn yuboring.")
+            await update.message.reply_text("😔 Qoshiq topilmadi. Koproq matn yuboring.")
     else:
-        await update.message.reply_text("❓ Link yoki qo'shiq matni yuboring!")
+        await update.message.reply_text("❓ Link yoki qoshiq matni yuboring!")
 
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
